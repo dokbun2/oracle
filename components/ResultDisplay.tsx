@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 import { ReadingResult, ReadingType } from '../types';
-import { Star, Sun, Heart, Coins, GraduationCap, RefreshCcw, Sparkles, Orbit, Moon, Quote } from 'lucide-react';
+import { Star, Sun, Heart, Coins, GraduationCap, RefreshCcw, Sparkles, Orbit, Moon, Quote, Download } from 'lucide-react';
 import AdSense from './AdSense';
 
 interface ResultDisplayProps {
@@ -21,6 +23,185 @@ const TABS: { key: TabKey; label: string; icon: React.ReactNode }[] = [
 
 const ResultDisplay: React.FC<ResultDisplayProps> = ({ result, onReset }) => {
   const [activeTab, setActiveTab] = useState<TabKey>('general');
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const pdfContainerRef = useRef<HTMLDivElement>(null);
+
+  const handleSavePDF = async () => {
+    if (isGeneratingPDF) return;
+
+    setIsGeneratingPDF(true);
+
+    try {
+      // 공통 PDF 생성 함수
+      const createPDF = async (canvas: HTMLCanvasElement, fileName: string) => {
+        const imgWidth = canvas.width;
+        const imgHeight = canvas.height;
+        const ratio = imgWidth / imgHeight;
+
+        const pdfWidth = 210;
+        const pdfHeight = pdfWidth / ratio;
+        const margin = 5;
+
+        const pdf = new jsPDF({
+          orientation: pdfHeight > pdfWidth ? 'portrait' : 'landscape',
+          unit: 'mm',
+          format: [pdfWidth, pdfHeight + (margin * 2)],
+        });
+
+        pdf.setFillColor(14, 23, 42); // #0e172a
+        pdf.rect(0, 0, pdfWidth, pdfHeight + (margin * 2), 'F');
+
+        const imgData = canvas.toDataURL('image/png');
+        pdf.addImage(imgData, 'PNG', margin, margin, pdfWidth - (margin * 2), pdfHeight);
+
+        pdf.save(fileName);
+      };
+
+      // 공통 제목 HTML
+      const createTitleHtml = (title: string, subtitle: string) => `
+        <div style="text-align: center; margin-bottom: 32px; padding-bottom: 24px; border-bottom: 2px solid #f97316;">
+          <div style="display: inline-block; background: rgba(249, 115, 22, 0.2); border: 1px solid rgba(249, 115, 22, 0.3); color: #fb923c; padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: bold; margin-bottom: 12px;">
+            ✨ ${subtitle}
+          </div>
+          <h1 style="color: #f1f5f9; font-size: 32px; font-weight: bold; margin: 0;">
+            ${title}
+          </h1>
+        </div>
+      `;
+
+      if (result.type === ReadingType.HOROSCOPE && result.horoscopeData) {
+        // 운세: 모든 탭 내용을 하나의 긴 이미지로 만들어서 한 페이지에 저장
+        const tabLabels: { [key in TabKey]: string } = {
+          general: '종합 운세',
+          newYear: '신년 운세',
+          love: '애정 운세',
+          business: '재물 운세',
+          career: '직장 운세',
+        };
+
+        const tempContainer = document.createElement('div');
+        tempContainer.style.cssText = `
+          position: absolute;
+          left: -9999px;
+          top: 0;
+          width: 1200px;
+          padding: 40px;
+          background: #0e172a;
+          color: #e2e8f0;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        `;
+
+        let allContentHtml = createTitleHtml('천체 운명 분석', 'CELESTIAL ANALYSIS');
+
+        for (const tab of TABS) {
+          const tabContent = result.horoscopeData[tab.key];
+          if (!tabContent) continue;
+
+          const contentHtml = tabContent
+            .replace(/\*\*(.*?)\*\*/g, '<strong style="color: #fb923c;">$1</strong>')
+            .replace(/^# (.*$)/gm, '<h1 style="color: #f1f5f9; font-size: 18px; margin: 16px 0 10px; border-left: 3px solid #f97316; padding-left: 8px;">$1</h1>')
+            .replace(/^## (.*$)/gm, '<h2 style="color: #e2e8f0; font-size: 16px; margin: 12px 0 8px;">$1</h2>')
+            .replace(/\n\n/g, '</p><p style="margin: 8px 0; line-height: 1.5; font-size: 12px;">')
+            .replace(/\n/g, '<br>');
+
+          allContentHtml += `
+            <div style="margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #334155;">
+              <h2 style="color: #f97316; font-size: 20px; font-weight: bold; margin: 0 0 12px 0; padding-bottom: 8px; border-bottom: 2px solid #f97316; display: inline-block;">
+                ${tabLabels[tab.key]}
+              </h2>
+              <div style="line-height: 1.5; font-size: 12px;">
+                <p style="margin: 8px 0; line-height: 1.5;">${contentHtml}</p>
+              </div>
+            </div>
+          `;
+        }
+
+        tempContainer.innerHTML = allContentHtml;
+        document.body.appendChild(tempContainer);
+
+        const canvas = await html2canvas(tempContainer, {
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#0e172a',
+          logging: false,
+        });
+
+        document.body.removeChild(tempContainer);
+
+        const fileName = `cosmic-oracle-horoscope-${new Date().toISOString().split('T')[0]}.pdf`;
+        await createPDF(canvas, fileName);
+
+      } else if (result.type === ReadingType.TAROT && result.tarotCard) {
+        // 타로: 카드 정보와 해석을 하나의 컨테이너에 담기
+        const tempContainer = document.createElement('div');
+        tempContainer.style.cssText = `
+          position: absolute;
+          left: -9999px;
+          top: 0;
+          width: 1200px;
+          padding: 40px;
+          background: #0e172a;
+          color: #e2e8f0;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        `;
+
+        // 타로 해석 내용 변환
+        const tarotContentHtml = (result.text || '')
+          .replace(/\*\*(.*?)\*\*/g, '<strong style="color: #fb923c;">$1</strong>')
+          .replace(/^# (.*$)/gm, '<h1 style="color: #f1f5f9; font-size: 20px; margin: 20px 0 12px; border-left: 3px solid #f97316; padding-left: 10px;">$1</h1>')
+          .replace(/^## (.*$)/gm, '<h2 style="color: #e2e8f0; font-size: 18px; margin: 16px 0 10px;">$1</h2>')
+          .replace(/^### (.*$)/gm, '<h3 style="color: #cbd5e1; font-size: 16px; margin: 14px 0 8px;">$1</h3>')
+          .replace(/\n\n/g, '</p><p style="margin: 10px 0; line-height: 1.6; font-size: 13px;">')
+          .replace(/\n/g, '<br>');
+
+        tempContainer.innerHTML = `
+          ${createTitleHtml('타로 리딩 결과', 'TAROT READING')}
+
+          <div style="display: flex; gap: 40px; align-items: flex-start;">
+            <!-- 카드 정보 -->
+            <div style="flex-shrink: 0; width: 280px; text-align: center;">
+              <div style="width: 280px; height: 420px; border-radius: 16px; overflow: hidden; border: 3px solid rgba(249, 115, 22, 0.3); margin-bottom: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.3);">
+                <img src="${result.tarotCard.imageUrl}" alt="${result.tarotCard.name}" style="width: 100%; height: 100%; object-fit: cover;" crossorigin="anonymous" />
+              </div>
+              <h3 style="color: #f1f5f9; font-size: 24px; font-weight: bold; margin: 0 0 8px 0;">${result.tarotCard.name}</h3>
+              <p style="color: #fb923c; font-size: 20px; font-weight: 600; margin: 0 0 16px 0;">${result.tarotCard.nameKr}</p>
+              <div style="background: rgba(30, 41, 59, 0.7); padding: 16px; border-radius: 12px; border: 1px solid #475569;">
+                <p style="color: #cbd5e1; font-style: italic; font-size: 14px; line-height: 1.6; margin: 0;">"${result.tarotCard.meaning}"</p>
+              </div>
+            </div>
+
+            <!-- 해석 내용 -->
+            <div style="flex: 1; line-height: 1.6; font-size: 13px;">
+              <p style="margin: 10px 0; line-height: 1.6;">${tarotContentHtml}</p>
+            </div>
+          </div>
+        `;
+
+        document.body.appendChild(tempContainer);
+
+        const canvas = await html2canvas(tempContainer, {
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#0e172a',
+          logging: false,
+        });
+
+        document.body.removeChild(tempContainer);
+
+        const fileName = `cosmic-oracle-tarot-${result.tarotCard.nameKr}-${new Date().toISOString().split('T')[0]}.pdf`;
+        await createPDF(canvas, fileName);
+      }
+
+    } catch (error) {
+      console.error('PDF 생성 오류:', error);
+      alert('PDF 저장 중 오류가 발생했습니다.');
+    } finally {
+      setIsGeneratingPDF(false);
+    }
+  };
 
   // Helper to improved readability by adding line breaks after sentences
   // Avoids breaking list numbering (e.g. "1. ")
@@ -45,7 +226,7 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({ result, onReset }) => {
         </h2>
       </div>
 
-      <div className="bg-slate-900/90 border border-slate-700 rounded-3xl shadow-2xl shadow-orange-500/5 overflow-hidden flex flex-col backdrop-blur-sm">
+      <div ref={contentRef} className="bg-slate-900/90 border border-slate-700 rounded-3xl shadow-2xl shadow-orange-500/5 overflow-hidden flex flex-col backdrop-blur-sm">
         
         {/* Tarot Card View */}
         {result.type === ReadingType.TAROT && result.tarotCard && (
@@ -172,7 +353,15 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({ result, onReset }) => {
         />
       </div>
 
-      <div className="mt-6 flex justify-center">
+      <div className="mt-6 flex justify-center gap-4 flex-wrap">
+        <button
+          onClick={handleSavePDF}
+          disabled={isGeneratingPDF}
+          className="flex items-center gap-2 px-10 py-4 bg-gradient-to-r from-orange-600 to-orange-500 border border-orange-500 hover:from-orange-500 hover:to-orange-400 text-white rounded-full transition-all duration-300 text-xl font-bold shadow-xl shadow-orange-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <Download size={22} />
+          <span>{isGeneratingPDF ? 'PDF 생성 중...' : 'PDF 저장'}</span>
+        </button>
         <button
           onClick={onReset}
           className="flex items-center gap-2 px-10 py-4 bg-slate-800 border border-slate-700 hover:bg-gradient-to-r hover:from-orange-600 hover:to-orange-500 hover:border-orange-500 text-white rounded-full transition-all duration-300 text-xl font-bold shadow-xl hover:shadow-orange-500/30"
