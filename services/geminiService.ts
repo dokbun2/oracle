@@ -34,7 +34,7 @@ export const generateHoroscope = async (userData: UserData): Promise<HoroscopeDa
       - angle: (추정) 각도 (예: 15° 20')
       - meaning: 해당 배치가 의미하는 핵심 키워드 (예: 자아와 활력)
     - general: 종합 운세 (전반적인 기질과 현재 운의 흐름)
-    - newYear: 신년운 (올해 혹은 다가오는 해의 핵심 키워드)
+    - newYear: 2026년 신년운 (2026년 병오년에 대한 운세와 핵심 키워드, 내년을 바라보는 관점에서 작성)
     - love: 애정운 (연애, 결혼, 대인관계)
     - business: 재물운 (금전, 투자)
     - career: 직장/학업운 (승진, 이직, 시험)
