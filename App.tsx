@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { UserData, AppMode, ReadingType, ReadingResult, TarotCard } from './types';
 import { INITIAL_USER_DATA } from './constants';
 import { generateHoroscope, generateTarotReading } from './services/geminiService';
@@ -8,11 +8,52 @@ import InputForm from './components/InputForm';
 import SelectionMenu from './components/SelectionMenu';
 import TarotDeck from './components/TarotDeck';
 import ResultDisplay from './components/ResultDisplay';
+import LoadingModal from './components/LoadingModal';
+
+const MIN_LOADING_TIME = 15000; // 15초 최소 대기 시간
 
 const App: React.FC = () => {
   const [mode, setMode] = useState<AppMode>(AppMode.INPUT);
   const [userData, setUserData] = useState<UserData>(INITIAL_USER_DATA);
   const [result, setResult] = useState<ReadingResult | null>(null);
+  const [loadingType, setLoadingType] = useState<'horoscope' | 'tarot'>('horoscope');
+
+  // API 결과와 최소 대기 시간 관리를 위한 ref
+  const apiResultRef = useRef<any>(null);
+  const apiCompleteRef = useRef(false);
+  const minTimeCompleteRef = useRef(false);
+  const currentTypeRef = useRef<ReadingType>(ReadingType.HOROSCOPE);
+  const selectedCardRef = useRef<TarotCard | null>(null);
+
+  // 결과 표시 조건 체크 및 처리
+  const checkAndShowResult = () => {
+    if (apiCompleteRef.current && minTimeCompleteRef.current) {
+      const type = currentTypeRef.current;
+
+      if (type === ReadingType.HOROSCOPE) {
+        if (apiResultRef.current) {
+          incrementUsage(userData);
+          setResult({ type, horoscopeData: apiResultRef.current });
+        } else {
+          setResult({ type, horoscopeData: undefined, text: "운세 데이터를 불러오지 못했습니다." });
+        }
+      } else {
+        const text = apiResultRef.current;
+        if (text && !text.includes("오류")) {
+          incrementUsage(userData);
+        }
+        setResult({ type: ReadingType.TAROT, text, tarotCard: selectedCardRef.current! });
+      }
+
+      setMode(AppMode.RESULT);
+    }
+  };
+
+  // 최소 대기 시간 완료 핸들러
+  const handleMinTimeComplete = () => {
+    minTimeCompleteRef.current = true;
+    checkAndShowResult();
+  };
 
   const handleFormSubmit = () => {
     // 입력 단계에서 미리 횟수를 체크하여 사용자에게 알려줄 수도 있지만,
@@ -27,17 +68,20 @@ const App: React.FC = () => {
         return;
       }
 
+      // 상태 초기화
+      apiResultRef.current = null;
+      apiCompleteRef.current = false;
+      minTimeCompleteRef.current = false;
+      currentTypeRef.current = ReadingType.HOROSCOPE;
+      setLoadingType('horoscope');
       setMode(AppMode.LOADING);
-      const data = await generateHoroscope(userData);
-      
-      if (data) {
-        incrementUsage(userData); // 성공 시 횟수 차감
-        setResult({ type, horoscopeData: data });
-      } else {
-        setResult({ type, horoscopeData: undefined, text: "운세 데이터를 불러오지 못했습니다." });
-      }
-      
-      setMode(AppMode.RESULT);
+
+      // API 호출 (비동기로 진행)
+      generateHoroscope(userData).then((data) => {
+        apiResultRef.current = data;
+        apiCompleteRef.current = true;
+        checkAndShowResult();
+      });
     } else {
       // 타로는 덱 화면으로 이동 후 카드 선택 시 체크
       setMode(AppMode.TAROT_DECK);
@@ -51,16 +95,21 @@ const App: React.FC = () => {
       return;
     }
 
+    // 상태 초기화
+    apiResultRef.current = null;
+    apiCompleteRef.current = false;
+    minTimeCompleteRef.current = false;
+    currentTypeRef.current = ReadingType.TAROT;
+    selectedCardRef.current = card;
+    setLoadingType('tarot');
     setMode(AppMode.LOADING);
-    const text = await generateTarotReading(userData, card);
-    
-    // 텍스트가 정상적으로 왔을 때만 차감
-    if (text && !text.includes("오류")) {
-       incrementUsage(userData);
-    }
 
-    setResult({ type: ReadingType.TAROT, text, tarotCard: card });
-    setMode(AppMode.RESULT);
+    // API 호출 (비동기로 진행)
+    generateTarotReading(userData, card).then((text) => {
+      apiResultRef.current = text;
+      apiCompleteRef.current = true;
+      checkAndShowResult();
+    });
   };
 
   const handleReset = () => {
@@ -98,15 +147,10 @@ const App: React.FC = () => {
           <TarotDeck onCardSelected={handleTarotCardSelected} />
         )}
 
+        {/* LoadingModal은 포탈로 렌더링되므로 여기서는 빈 상태 유지 */}
         {mode === AppMode.LOADING && (
-          <div className="flex flex-col items-center animate-pulse px-4 text-center">
-            <div className="w-16 h-16 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mb-6 shadow-[0_0_20px_rgba(249,115,22,0.4)]"></div>
-            <p className="text-2xl text-orange-400 font-display tracking-widest mb-2 font-bold">
-              ORACLE READING
-            </p>
-            <p className="text-slate-400 text-lg">
-              우주의 메시지를 수신하고 있습니다
-            </p>
+          <div className="flex flex-col items-center px-4 text-center">
+            {/* LoadingModal이 오버레이로 표시됨 */}
           </div>
         )}
 
@@ -118,6 +162,13 @@ const App: React.FC = () => {
       <footer className="w-full text-slate-500 text-xs text-center py-4 z-10 border-t border-slate-800/50">
         <p>Cosmic Oracle &copy; {new Date().getFullYear()} | Powered by ToolB & Simulated NASA Data</p>
       </footer>
+
+      {/* 로딩 모달 (광고 포함) */}
+      <LoadingModal
+        isOpen={mode === AppMode.LOADING}
+        type={loadingType}
+        onMinTimeComplete={handleMinTimeComplete}
+      />
     </div>
   );
 };
