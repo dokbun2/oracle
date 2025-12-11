@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Cosmic Oracle</title>
+    <!-- Preload fonts for faster loading -->
+    <link rel="preload" href="/fonts/AritaBuriKR-Medium.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="preload" href="/fonts/AritaBuriKR-Bold.ttf" as="font" type="font/ttf" crossorigin>
+    <style>
+      /* Arita Buri KR Font Family */
+      @font-face {
+        font-family: 'Arita Buri KR';
+        src: url('/fonts/AritaBuriKR-Light.ttf') format('truetype');
+        font-weight: 300;
+        font-style: normal;
+        font-display: block;
+      }
+
+      @font-face {
+        font-family: 'Arita Buri KR';
+        src: url('/fonts/AritaBuriKR-Medium.ttf') format('truetype');
+        font-weight: 400;
+        font-style: normal;
+        font-display: block;
+      }
+
+      @font-face {
+        font-family: 'Arita Buri KR';
+        src: url('/fonts/AritaBuriKR-Medium.ttf') format('truetype');
+        font-weight: 500;
+        font-style: normal;
+        font-display: block;
+      }
+
+      @font-face {
+        font-family: 'Arita Buri KR';
+        src: url('/fonts/AritaBuriKR-SemiBold.ttf') format('truetype');
+        font-weight: 600;
+        font-style: normal;
+        font-display: block;
+      }
+
+      @font-face {
+        font-family: 'Arita Buri KR';
+        src: url('/fonts/AritaBuriKR-Bold.ttf') format('truetype');
+        font-weight: 700;
+        font-style: normal;
+        font-display: block;
+      }
+
+      /* 폰트 즉시 적용 */
+      html, body {
+        font-family: 'Arita Buri KR', sans-serif !important;
+      }
+    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@300;400;500;600;700&family=Noto+Serif+KR:wght@400;700&display=swap" rel="stylesheet">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2764784359698938" crossorigin="anonymous"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          container: {
+            center: true,
+            padding: "2rem",
+            screens: {
+              "2xl": "1400px",
+            },
+          },
+          extend: {
+            fontFamily: {
+              sans: ['"Arita Buri KR"', '"Inter"', 'sans-serif'],
+              serif: ['"Arita Buri KR"', '"Noto Serif KR"', 'serif'],
+              display: ['"Cinzel"', 'serif'],
+              korean: ['"Arita Buri KR"', 'sans-serif'],
+            },
+            colors: {
+              border: "hsl(var(--border))",
+              input: "hsl(var(--input))",
+              ring: "hsl(var(--ring))",
+              background: "hsl(var(--background))",
+              foreground: "hsl(var(--foreground))",
+              primary: {
+                DEFAULT: "hsl(var(--primary))",
+                foreground: "hsl(var(--primary-foreground))",
+              },
+              secondary: {
+                DEFAULT: "hsl(var(--secondary))",
+                foreground: "hsl(var(--secondary-foreground))",
+              },
+              destructive: {
+                DEFAULT: "hsl(var(--destructive))",
+                foreground: "hsl(var(--destructive-foreground))",
+              },
+              muted: {
+                DEFAULT: "hsl(var(--muted))",
+                foreground: "hsl(var(--muted-foreground))",
+              },
+              accent: {
+                DEFAULT: "hsl(var(--accent))",
+                foreground: "hsl(var(--accent-foreground))",
+              },
+              popover: {
+                DEFAULT: "hsl(var(--popover))",
+                foreground: "hsl(var(--popover-foreground))",
+              },
+              card: {
+                DEFAULT: "hsl(var(--card))",
+                foreground: "hsl(var(--card-foreground))",
+              },
+              space: {
+                950: '#020617', // Slate 950
+                900: '#0f172a', // Slate 900
+                800: '#1e293b', // Slate 800
+                700: '#334155', // Slate 700
+                gold: '#fbbf24', // Amber 400
+              }
+            },
+            borderRadius: {
+              lg: "var(--radius)",
+              md: "calc(var(--radius) - 2px)",
+              sm: "calc(var(--radius) - 4px)",
+            },
+            animation: {
+              'twinkle': 'twinkle 3s ease-in-out infinite',
+              'float': 'float 6s ease-in-out infinite',
+              'fade-in': 'fadeIn 0.5s ease-out',
+            },
+            keyframes: {
+              twinkle: {
+                '0%, 100%': { opacity: 0.5, transform: 'scale(1)' },
+                '50%': { opacity: 1, transform: 'scale(1.2)' },
+              },
+              float: {
+                '0%, 100%': { transform: 'translateY(0)' },
+                '50%': { transform: 'translateY(-10px)' },
+              },
+              fadeIn: {
+                '0%': { opacity: 0, transform: 'translateY(10px)' },
+                '100%': { opacity: 1, transform: 'translateY(0)' },
+              }
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      :root {
+        --background: 222 47% 6%;
+        --foreground: 210 40% 98%;
+
+        --card: 222 47% 8%;
+        --card-foreground: 210 40% 98%;
+
+        --popover: 222 47% 8%;
+        --popover-foreground: 210 40% 98%;
+
+        --primary: 24.6 95% 53.1%; /* Orange */
+        --primary-foreground: 210 40% 98%;
+
+        --secondary: 217 33% 17%;
+        --secondary-foreground: 210 40% 98%;
+
+        --muted: 217 33% 17%;
+        --muted-foreground: 215 20% 65%;
+
+        --accent: 217 33% 17%;
+        --accent-foreground: 210 40% 98%;
+
+        --destructive: 0 84.2% 60.2%;
+        --destructive-foreground: 210 40% 98%;
+
+        --border: 217 33% 20%;
+        --input: 217 33% 20%;
+        --ring: 24.6 95% 53.1%;
+
+        --radius: 0.75rem;
+      }
+
+      body {
+        background-color: #0c1222;
+        color: #f1f5f9;
+        font-family: 'Arita Buri KR', 'Inter', sans-serif !important;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* 모든 요소에 폰트 적용 */
+      *, *::before, *::after {
+        font-family: 'Arita Buri KR', 'Inter', sans-serif !important;
+      }
+
+      /* 영문 타이틀은 Cinzel 유지 */
+      .font-display {
+        font-family: 'Cinzel', serif !important;
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "@google/genai": "https://esm.sh/@google/genai@^1.33.0",
+    "react-markdown": "https://esm.sh/react-markdown@9.0.1?external=react,react-dom",
+    "react-dom/": "https://esm.sh/react-dom@18.3.1/",
+    "react/": "https://esm.sh/react@18.3.1/",
+    "react": "https://esm.sh/react@18.3.1",
+    "lucide-react": "https://esm.sh/lucide-react@0.344.0?external=react,react-dom"
+  }
+}
+</script>
+</head>
+  <body>
+    <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>

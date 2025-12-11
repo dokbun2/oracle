@@ -1,0 +1,5 @@
+{
+  "name": "Cosmic Oracle (우주 예언자)",
+  "description": "NASA의 별자리 데이터와 타로 카드를 결합한 AI 기반 운세 웹 애플리케이션입니다. 생년월일과 성별을 입력하여 정밀한 별자리 운세와 타로 리딩을 받아보세요.",
+  "requestFramePermissions": []
+}
