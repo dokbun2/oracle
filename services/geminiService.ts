@@ -6,12 +6,42 @@ const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 
 const ai = new GoogleGenAI({ apiKey: apiKey });
 
+// 천간 (10개)
+const HEAVENLY_STEMS = ['갑', '을', '병', '정', '무', '기', '경', '신', '임', '계'];
+// 지지 (12개)
+const EARTHLY_BRANCHES = ['자', '축', '인', '묘', '진', '사', '오', '미', '신', '유', '술', '해'];
+
+// 연도에 해당하는 간지 계산
+const getGanjiForYear = (year: number): string => {
+  const stemIndex = (year - 4) % 10;
+  const branchIndex = (year - 4) % 12;
+  return `${HEAVENLY_STEMS[stemIndex]}${EARTHLY_BRANCHES[branchIndex]}`;
+};
+
+// 현재 날짜 기준으로 신년운 대상 연도 계산
+const getNewYearInfo = (): { year: number; ganji: string } => {
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const nextYear = currentYear + 1;
+  return {
+    year: nextYear,
+    ganji: getGanjiForYear(nextYear)
+  };
+};
+
 export const generateHoroscope = async (userData: UserData): Promise<HoroscopeData | null> => {
   const model = "gemini-2.5-flash";
-  
+
+  const now = new Date();
+  const currentDateStr = `${now.getFullYear()}년 ${now.getMonth() + 1}월 ${now.getDate()}일`;
+  const newYearInfo = getNewYearInfo();
+
   const prompt = `
     당신은 NASA의 JPL(Jet Propulsion Laboratory) 천체 데이터와 정밀 천문학 지식을 기반으로 운명을 분석하는 AI 점성술사입니다.
-    
+
+    [현재 날짜]
+    ${currentDateStr}
+
     [사용자 정보]
     이름: ${userData.name}
     성별: ${userData.gender}
@@ -26,7 +56,7 @@ export const generateHoroscope = async (userData: UserData): Promise<HoroscopeDa
 
     [출력 요구사항]
     JSON 형식으로만 응답해야 하며, 다음 스키마를 정확히 따라야 합니다.
-    
+
     - planetaryPositions: 주요 행성(태양, 달, 수성, 금성, 화성)의 위치 정보 배열
       - name: 행성 이름 (예: Sun, Moon)
       - sign: 별자리 영문명 (예: Leo)
@@ -34,7 +64,7 @@ export const generateHoroscope = async (userData: UserData): Promise<HoroscopeDa
       - angle: (추정) 각도 (예: 15° 20')
       - meaning: 해당 배치가 의미하는 핵심 키워드 (예: 자아와 활력)
     - general: 종합 운세 (전반적인 기질과 현재 운의 흐름)
-    - newYear: 2026년 신년운 (2026년 병오년에 대한 운세와 핵심 키워드, 내년을 바라보는 관점에서 작성)
+    - newYear: ${newYearInfo.year}년 신년운 (${newYearInfo.year}년 ${newYearInfo.ganji}년에 대한 운세와 핵심 키워드, 내년을 바라보는 관점에서 작성)
     - love: 애정운 (연애, 결혼, 대인관계)
     - business: 재물운 (금전, 투자)
     - career: 직장/학업운 (승진, 이직, 시험)
