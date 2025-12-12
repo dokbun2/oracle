@@ -3,7 +3,7 @@ import { Sparkles } from 'lucide-react';
 
 interface LoadingModalProps {
   isOpen: boolean;
-  type: 'horoscope' | 'tarot';
+  type: 'horoscope' | 'tarot' | 'saju';
   onMinTimeComplete?: () => void;
 }
 
@@ -25,6 +25,15 @@ const TAROT_MESSAGES = [
   "당신을 위한 조언을 준비하고 있습니다...",
 ];
 
+const SAJU_MESSAGES = [
+  "사주팔자를 계산하고 있습니다...",
+  "천간과 지지를 분석하고 있습니다...",
+  "일간과 세운의 관계를 파악하고 있습니다...",
+  "십성의 기운을 해석하고 있습니다...",
+  "오행의 흐름을 읽고 있습니다...",
+  "2025년 운세를 정리하고 있습니다...",
+];
+
 const MIN_LOADING_TIME = 15000; // 15초
 
 declare global {
@@ -40,9 +49,17 @@ const LoadingModal: React.FC<LoadingModalProps> = ({ isOpen, type, onMinTimeComp
   const adLoadedRef = useRef(false);
   const minTimeCompleteRef = useRef(false);
 
-  const messages = type === 'horoscope' ? HOROSCOPE_MESSAGES : TAROT_MESSAGES;
-  const icon = type === 'horoscope' ? '🔮' : '🃏';
-  const title = type === 'horoscope' ? '천체 운명 분석 중' : '타로 카드 해석 중';
+  const messages = type === 'horoscope'
+    ? HOROSCOPE_MESSAGES
+    : type === 'saju'
+      ? SAJU_MESSAGES
+      : TAROT_MESSAGES;
+  const icon = type === 'horoscope' ? '🔮' : type === 'saju' ? '📅' : '🃏';
+  const title = type === 'horoscope'
+    ? '천체 운명 분석 중'
+    : type === 'saju'
+      ? '신년 운세 분석 중'
+      : '타로 카드 해석 중';
 
   useEffect(() => {
     if (!isOpen) {

@@ -1,6 +1,6 @@
 import React from 'react';
 import { ReadingType } from '../types';
-import { Stars, Sparkles, ChevronLeft } from 'lucide-react';
+import { Stars, Sparkles, ChevronLeft, Calendar } from 'lucide-react';
 import AdSense from './AdSense';
 
 interface SelectionMenuProps {
@@ -15,7 +15,7 @@ const SelectionMenu: React.FC<SelectionMenuProps> = ({ onSelect, onBack }) => {
         당신의 <span className="text-orange-400">계시</span>를 선택하세요
       </h2>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
         {/* Horoscope Card */}
         <button
           onClick={() => onSelect(ReadingType.HOROSCOPE)}
@@ -27,9 +27,32 @@ const SelectionMenu: React.FC<SelectionMenuProps> = ({ onSelect, onBack }) => {
             <div className="w-20 h-20 rounded-full bg-slate-800 border border-orange-500/30 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500 shadow-lg shadow-orange-500/10">
               <Stars size={40} className="text-orange-400 group-hover:text-orange-300" />
             </div>
-            <h3 className="text-2xl md:text-3xl font-bold text-slate-100 mb-3 tracking-tight">천문 운세</h3>
-            <p className="text-slate-400 text-lg leading-relaxed max-w-[80%] font-medium">
+            <h3 className="text-2xl md:text-3xl font-bold text-slate-100 mb-3 tracking-tight">별자리 운세</h3>
+            <p className="text-slate-400 text-lg leading-relaxed max-w-[90%] font-medium">
               NASA의 천체 데이터를 기반으로<br/>별들이 전하는 정밀한 운명
+            </p>
+          </div>
+        </button>
+
+        {/* Saju New Year Fortune Card */}
+        <button
+          onClick={() => onSelect(ReadingType.SAJU_NEWYEAR)}
+          className="group relative flex flex-col items-center justify-center p-8 h-[320px] rounded-3xl bg-slate-900/80 border border-slate-700 hover:border-yellow-500/70 transition-all duration-500 hover:shadow-2xl hover:shadow-yellow-500/20 hover:-translate-y-2 shadow-lg overflow-hidden backdrop-blur-sm"
+        >
+          <div className="absolute inset-0 bg-gradient-to-b from-yellow-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+          {/* NEW 배지 */}
+          <div className="absolute top-4 right-4 px-3 py-1 bg-yellow-500 text-slate-900 text-xs font-bold rounded-full">
+            NEW
+          </div>
+
+          <div className="relative z-10 flex flex-col items-center text-center">
+            <div className="w-20 h-20 rounded-full bg-slate-800 border border-yellow-500/30 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500 shadow-lg shadow-yellow-500/10">
+              <Calendar size={40} className="text-yellow-400 group-hover:text-yellow-300" />
+            </div>
+            <h3 className="text-2xl md:text-3xl font-bold text-slate-100 mb-3 tracking-tight">신년 운세</h3>
+            <p className="text-slate-400 text-lg leading-relaxed max-w-[90%] font-medium">
+              사주명리학 기반의<br/>{new Date().getFullYear() + 1}년 운세 분석
             </p>
           </div>
         </button>
@@ -46,7 +69,7 @@ const SelectionMenu: React.FC<SelectionMenuProps> = ({ onSelect, onBack }) => {
               <Sparkles size={40} className="text-red-400 group-hover:text-red-300" />
             </div>
             <h3 className="text-2xl md:text-3xl font-bold text-slate-100 mb-3 tracking-tight">타로 리딩</h3>
-            <p className="text-slate-400 text-lg leading-relaxed max-w-[80%] font-medium">
+            <p className="text-slate-400 text-lg leading-relaxed max-w-[90%] font-medium">
               무의식의 반영인 카드를 통해<br/>현재의 에너지와 조언을 탐색
             </p>
           </div>

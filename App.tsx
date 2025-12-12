@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { UserData, AppMode, ReadingType, ReadingResult, TarotCard } from './types';
 import { INITIAL_USER_DATA } from './constants';
 import { generateHoroscope, generateTarotReading } from './services/geminiService';
+import { generateSajuNewYear } from './services/sajuService';
 import { checkUsageLimit, incrementUsage, getRemainingUsage } from './utils/usageLimit';
 import StarBackground from './components/StarBackground';
 import InputForm from './components/InputForm';
@@ -16,7 +17,7 @@ const App: React.FC = () => {
   const [mode, setMode] = useState<AppMode>(AppMode.INPUT);
   const [userData, setUserData] = useState<UserData>(INITIAL_USER_DATA);
   const [result, setResult] = useState<ReadingResult | null>(null);
-  const [loadingType, setLoadingType] = useState<'horoscope' | 'tarot'>('horoscope');
+  const [loadingType, setLoadingType] = useState<'horoscope' | 'tarot' | 'saju'>('horoscope');
 
   // API 결과와 최소 대기 시간 관리를 위한 ref
   const apiResultRef = useRef<any>(null);
@@ -36,6 +37,13 @@ const App: React.FC = () => {
           setResult({ type, horoscopeData: apiResultRef.current });
         } else {
           setResult({ type, horoscopeData: undefined, text: "운세 데이터를 불러오지 못했습니다." });
+        }
+      } else if (type === ReadingType.SAJU_NEWYEAR) {
+        if (apiResultRef.current) {
+          incrementUsage(userData);
+          setResult({ type, sajuNewYearData: apiResultRef.current });
+        } else {
+          setResult({ type, sajuNewYearData: undefined, text: "신년운세 데이터를 불러오지 못했습니다." });
         }
       } else {
         const text = apiResultRef.current;
@@ -64,7 +72,7 @@ const App: React.FC = () => {
   const handleSelection = async (type: ReadingType) => {
     if (type === ReadingType.HOROSCOPE) {
       if (!checkUsageLimit(userData)) {
-        alert("해당 생년월일로 무료 체험 횟수(2회)를 모두 소진하셨습니다.");
+        alert("해당 생년월일로 무료 체험 횟수(3회)를 모두 소진하셨습니다.");
         return;
       }
 
@@ -77,11 +85,45 @@ const App: React.FC = () => {
       setMode(AppMode.LOADING);
 
       // API 호출 (비동기로 진행)
-      generateHoroscope(userData).then((data) => {
-        apiResultRef.current = data;
-        apiCompleteRef.current = true;
-        checkAndShowResult();
-      });
+      generateHoroscope(userData)
+        .then((data) => {
+          apiResultRef.current = data;
+          apiCompleteRef.current = true;
+          checkAndShowResult();
+        })
+        .catch((error) => {
+          console.error('Horoscope API Error:', error);
+          apiResultRef.current = null;
+          apiCompleteRef.current = true;
+          checkAndShowResult();
+        });
+    } else if (type === ReadingType.SAJU_NEWYEAR) {
+      if (!checkUsageLimit(userData)) {
+        alert("해당 생년월일로 무료 체험 횟수(3회)를 모두 소진하셨습니다.");
+        return;
+      }
+
+      // 상태 초기화
+      apiResultRef.current = null;
+      apiCompleteRef.current = false;
+      minTimeCompleteRef.current = false;
+      currentTypeRef.current = ReadingType.SAJU_NEWYEAR;
+      setLoadingType('saju');
+      setMode(AppMode.LOADING);
+
+      // API 호출 (비동기로 진행)
+      generateSajuNewYear(userData)
+        .then((data) => {
+          apiResultRef.current = data;
+          apiCompleteRef.current = true;
+          checkAndShowResult();
+        })
+        .catch((error) => {
+          console.error('Saju API Error:', error);
+          apiResultRef.current = null;
+          apiCompleteRef.current = true;
+          checkAndShowResult();
+        });
     } else {
       // 타로는 덱 화면으로 이동 후 카드 선택 시 체크
       setMode(AppMode.TAROT_DECK);
@@ -90,7 +132,7 @@ const App: React.FC = () => {
 
   const handleTarotCardSelected = async (card: TarotCard) => {
     if (!checkUsageLimit(userData)) {
-      alert("해당 생년월일로 무료 체험 횟수(2회)를 모두 소진하셨습니다.");
+      alert("해당 생년월일로 무료 체험 횟수(3회)를 모두 소진하셨습니다.");
       setMode(AppMode.SELECTION); // 다시 선택 화면으로
       return;
     }
@@ -105,11 +147,18 @@ const App: React.FC = () => {
     setMode(AppMode.LOADING);
 
     // API 호출 (비동기로 진행)
-    generateTarotReading(userData, card).then((text) => {
-      apiResultRef.current = text;
-      apiCompleteRef.current = true;
-      checkAndShowResult();
-    });
+    generateTarotReading(userData, card)
+      .then((text) => {
+        apiResultRef.current = text;
+        apiCompleteRef.current = true;
+        checkAndShowResult();
+      })
+      .catch((error) => {
+        console.error('Tarot API Error:', error);
+        apiResultRef.current = null;
+        apiCompleteRef.current = true;
+        checkAndShowResult();
+      });
   };
 
   const handleReset = () => {

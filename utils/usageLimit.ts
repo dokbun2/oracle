@@ -1,6 +1,6 @@
 import { UserData } from '../types';
 
-const MAX_ATTEMPTS = 2;
+const MAX_ATTEMPTS = 3;
 const STORAGE_PREFIX = 'cosmic_oracle_usage_';
 
 // 고유 키 생성 (이름 + 생년월일)
@@ -30,4 +30,16 @@ export const getRemainingUsage = (userData: UserData): number => {
   const usageStr = localStorage.getItem(key);
   const usage = usageStr ? parseInt(usageStr, 10) : 0;
   return Math.max(0, MAX_ATTEMPTS - usage);
+};
+
+// 모든 사용자의 무료 횟수 리셋
+export const resetAllUsage = () => {
+  const keysToRemove = Object.keys(localStorage).filter(k => k.startsWith(STORAGE_PREFIX));
+  keysToRemove.forEach(k => localStorage.removeItem(k));
+};
+
+// 특정 사용자의 무료 횟수 리셋
+export const resetUsage = (userData: UserData) => {
+  const key = getUserKey(userData);
+  localStorage.removeItem(key);
 };

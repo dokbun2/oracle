@@ -1,5 +1,6 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { UserData, TarotCard, HoroscopeData } from "../types";
+import { normalizeDateString } from "../utils/dateUtils";
 
 // 환경 변수에서 API 키 로드 (Vite 환경)
 const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
@@ -35,6 +36,7 @@ export const generateHoroscope = async (userData: UserData): Promise<HoroscopeDa
   const now = new Date();
   const currentDateStr = `${now.getFullYear()}년 ${now.getMonth() + 1}월 ${now.getDate()}일`;
   const newYearInfo = getNewYearInfo();
+  const birthDateFormatted = normalizeDateString(userData.birthDate);
 
   const prompt = `
     당신은 NASA의 JPL(Jet Propulsion Laboratory) 천체 데이터와 정밀 천문학 지식을 기반으로 운명을 분석하는 AI 점성술사입니다.
@@ -45,7 +47,7 @@ export const generateHoroscope = async (userData: UserData): Promise<HoroscopeDa
     [사용자 정보]
     이름: ${userData.name}
     성별: ${userData.gender}
-    생년월일: ${userData.birthDate}
+    생년월일: ${birthDateFormatted}
     양력/음력: ${userData.calendarType}
     ${userData.birthTime ? `태어난 시간: ${userData.birthTime}` : '태어난 시간: 모름 (정오 기준 계산)'}
 
@@ -121,14 +123,15 @@ export const generateHoroscope = async (userData: UserData): Promise<HoroscopeDa
 
 export const generateTarotReading = async (userData: UserData, card: TarotCard): Promise<string> => {
   const model = "gemini-2.5-flash";
+  const birthDateFormatted = normalizeDateString(userData.birthDate);
 
   const prompt = `
     당신은 우주의 에너지를 해석하는 신비로운 타로 마스터 AI입니다.
-    
+
     [사용자 정보]
     이름: ${userData.name}
     성별: ${userData.gender}
-    생년월일: ${userData.birthDate} (${userData.calendarType})
+    생년월일: ${birthDateFormatted} (${userData.calendarType})
 
     [선택한 카드]
     카드 이름: ${card.name} (${card.nameKr})
